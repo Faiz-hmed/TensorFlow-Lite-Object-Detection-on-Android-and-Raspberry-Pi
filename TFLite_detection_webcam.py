@@ -22,6 +22,7 @@ import sys
 import time
 from threading import Thread
 import importlib.util
+import enhancements as enh
 
 # Define VideoStream class to handle streaming of video from webcam in separate processing thread
 # Source - Adrian Rosebrock, PyImageSearch: https://www.pyimagesearch.com/2015/12/28/increasing-raspberry-pi-fps-with-python-and-opencv/
@@ -96,6 +97,7 @@ use_TPU = args.edgetpu
 pkg = importlib.util.find_spec('tflite_runtime')
 if pkg:
     from tflite_runtime.interpreter import Interpreter
+    print("TFLite Runtime imported!")
     if use_TPU:
         from tflite_runtime.interpreter import load_delegate
 else:
@@ -154,7 +156,7 @@ input_std = 127.5
 frame_rate_calc = 1
 freq = cv2.getTickFrequency()
 
-# Initialize video stream
+#  Initialize video stream
 videostream = VideoStream(resolution=(imW,imH),framerate=30).start()
 time.sleep(1)
 
@@ -187,12 +189,17 @@ while True:
     scores = interpreter.get_tensor(output_details[2]['index'])[0] # Confidence of detected objects
     #num = interpreter.get_tensor(output_details[3]['index'])[0]  # Total number of detected objects (inaccurate and not needed)
 
+    # boxes, classes, scores = enh.calc_nms(boxes, classes, scores)
+
+    # boxes, classes, scores = enh.trim_boxes(boxes,classes,scores,imH,imW)
+    
+
     # Loop over all detections and draw detection box if confidence is above minimum threshold
     for i in range(len(scores)):
         if ((scores[i] > min_conf_threshold) and (scores[i] <= 1.0)):
 
             # Get bounding box coordinates and draw box
-            # Interpreter can return coordinates that are outside of image dimensions, need to force them to be within image using max() and min()
+            # Interpreter can return coordinates that are outside of image dimensions, need to force them to be within image u~sing max() and min()
             ymin = int(max(1,(boxes[i][0] * imH)))
             xmin = int(max(1,(boxes[i][1] * imW)))
             ymax = int(min(imH,(boxes[i][2] * imH)))
